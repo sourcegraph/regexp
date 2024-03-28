@@ -135,6 +135,14 @@ func Compile(expr string) (*Regexp, error) {
 	return compile(expr, syntax.Perl, false)
 }
 
+// CompileParsed has the same functionality as Compile, except using the
+// already parsed regexp. This is for performance reasons only.
+//
+// Note: expr is not compiled, but is used for Regexp.String and Regexp.Split.
+func CompileParsed(expr string, re *syntax.Regexp) (*Regexp, error) {
+	return compileParsed(expr, re, false)
+}
+
 // CompilePOSIX is like [Compile] but restricts the regular expression
 // to POSIX ERE (egrep) syntax and changes the match semantics to
 // leftmost-longest.
@@ -173,6 +181,10 @@ func compile(expr string, mode syntax.Flags, longest bool) (*Regexp, error) {
 	if err != nil {
 		return nil, err
 	}
+	return compileParsed(expr, re, longest)
+}
+
+func compileParsed(expr string, re *syntax.Regexp, longest bool) (*Regexp, error) {
 	maxCap := re.MaxCap()
 	capNames := re.CapNames()
 
