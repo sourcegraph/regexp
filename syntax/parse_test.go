@@ -6,6 +6,7 @@ package syntax
 
 import (
 	"fmt"
+	"regexp/syntax"
 	"strings"
 	"testing"
 	"unicode"
@@ -284,6 +285,30 @@ func testParseDump(t *testing.T, tests []parseTest, flags Flags) {
 			t.Errorf("Parse(%#q).Dump() = %#q want %#q", tt.Regexp, d, tt.Dump)
 		}
 	}
+
+	t.Run("FromStd", func(t *testing.T) {
+		for _, tt := range tests {
+			if tt.Regexp == `(?<name>a)` {
+				t.Logf("go stdlib 1.21 doesn't parse this syntax: %q", tt.Regexp)
+				continue
+			}
+
+			stdre, err := syntax.Parse(tt.Regexp, syntax.Flags(flags))
+			if err != nil {
+				t.Errorf("Parse(%#q): %v", tt.Regexp, err)
+				continue
+			}
+			re := FromStd(stdre)
+			if tt.Dump == "" {
+				// It parsed. That's all we care about.
+				continue
+			}
+			d := dump(re)
+			if d != tt.Dump {
+				t.Errorf("Parse(%#q).Dump() = %#q want %#q", tt.Regexp, d, tt.Dump)
+			}
+		}
+	})
 }
 
 // dump prints a string representation of the regexp showing
